@@ -1,47 +1,16 @@
-import React, { useState } from 'react';
-import Header from './components/Header';
-import AddItem from './components/AddItem';
-import WishlistList from './components/WishlistList';
-import Footer from './components/Footer';
-import EditItemModal from './components/EditItemModal';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import Navbar from './components/Navbar';
+import Home from './pages/Home';
+import Projects from './pages/Projects';
+import About from './pages/About';
+import SimpleBackground from './components/SimpleBackground';
 import useLocalStorage from './hooks/useLocalStorage';
 import './App.css';
 
 function App() {
-  const [items, setItems] = useLocalStorage('wishlist-items', []);
-  const [darkMode, setDarkMode] = useLocalStorage('dark-mode', false);
-  const [editingItem, setEditingItem] = useState(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
-  // Add new item to the wishlist
-  const handleAddItem = (item) => {
-    setItems([...items, item]);
-  };
-
-  // Delete an item from the wishlist
-  const handleDeleteItem = (id) => {
-    setItems(items.filter(item => item.id !== id));
-  };
-  
-  // Open edit modal
-  const handleEditItem = (item) => {
-    setEditingItem(item);
-    setIsEditModalOpen(true);
-  };
-  
-  // Save edited item
-  const handleSaveEdit = (updatedItem) => {
-    setItems(items.map(item => 
-      item.id === updatedItem.id ? updatedItem : item
-    ));
-  };
-  
-  // Close edit modal
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
-    // Give time for the exit animation to complete before clearing the item
-    setTimeout(() => setEditingItem(null), 300);
-  };
+  const [darkMode, setDarkMode] = useLocalStorage('dark-mode', true);
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -53,54 +22,88 @@ function App() {
     }
   };
 
-  // Apply dark mode on load
-  React.useEffect(() => {
+  // Apply dark mode on initial load
+  useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-  }, []);
+  }, [darkMode]);
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} transition-colors duration-200`}>
-      <div className="container mx-auto px-4 max-w-2xl pt-4 pb-8">
-        <Header darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+    <BrowserRouter>
+      <div className={`min-h-screen flex flex-col ${darkMode ? 'dark bg-dark-primary text-white' : 'bg-gray-50 text-gray-900'} transition-colors duration-200`}>
+        <SimpleBackground />
         
-        <main className="mt-6">
-          <AddItem onAddItem={handleAddItem} />
-          
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 border border-gray-100 dark:border-gray-700">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-medium dark:text-white flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-                My Wishlist
-              </h2>
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full dark:bg-blue-900/30 dark:text-blue-300">
-                {items.length} {items.length === 1 ? 'item' : 'items'}
-              </span>
-            </div>
-            
-            <WishlistList 
-              items={items} 
-              setItems={setItems} 
-              onDelete={handleDeleteItem}
-              onEdit={handleEditItem}
-            />
+        <div className="max-w-screen-xl mx-auto w-full px-4 pt-4 pb-8 flex-grow">
+          <div className="flex justify-end mb-2">
+            <motion.button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white"
+              aria-label="Toggle dark mode"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, rotate: darkMode ? 0 : 360 }}
+              transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
+            >
+              {darkMode ? (
+                <motion.svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="h-5 w-5" 
+                  viewBox="0 0 20 20" 
+                  fill="currentColor"
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clipRule="evenodd" />
+                </motion.svg>
+              ) : (
+                <motion.svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="h-5 w-5" 
+                  viewBox="0 0 20 20" 
+                  fill="currentColor"
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                </motion.svg>
+              )}
+            </motion.button>
           </div>
-        </main>
+          
+          <Navbar />
+          
+          <main className="mt-6">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/about" element={<About />} />
+            </Routes>
+          </main>
+        </div>
         
-        <Footer />
-        
-        {/* Edit Modal */}
-        <EditItemModal 
-          item={editingItem} 
-          isOpen={isEditModalOpen} 
-          onClose={handleCloseEditModal} 
-          onSave={handleSaveEdit}
-        />
+        <motion.footer 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-transparent rounded-lg shadow-none m-4 dark:bg-transparent max-w-screen-xl mx-auto w-full"
+        >
+          <div className="w-full p-4 flex justify-center">
+            <motion.span 
+              whileHover={{ scale: 1.02 }}
+              className="text-sm text-gray-500 text-center dark:text-gray-400"
+            >
+              © {new Date().getFullYear()} <a href="/" className="hover:underline">Listly</a>. All Rights Reserved.
+            </motion.span>
+          </div>
+        </motion.footer>
       </div>
-    </div>
+    </BrowserRouter>
   );
 }
 

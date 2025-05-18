@@ -4,6 +4,16 @@ module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
+      colors: {
+        gray: {
+          850: '#151a29',
+          900: '#111827',
+          950: '#0b111e',
+        }
+      },
+      backgroundColor: {
+        'dark-primary': '#0f172a',
+      },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',
       },

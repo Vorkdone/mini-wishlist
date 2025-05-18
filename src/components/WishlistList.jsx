@@ -1,16 +1,55 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import WishlistItem from './WishlistItem';
 
+// StrictModeDroppable component to fix issues with React 18 and DnD
+const StrictModeDroppable = ({ children, ...props }) => {
+  const [enabled, setEnabled] = useState(false);
+  
+  useEffect(() => {
+    // Wait until after client-side hydration
+    const timeout = setTimeout(() => {
+      setEnabled(true);
+    }, 0);
+    
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, []);
+  
+  if (!enabled) {
+    return null;
+  }
+  
+  return <Droppable {...props}>{children}</Droppable>;
+};
+
 const WishlistList = ({ items, setItems, onDelete, onEdit }) => {
+  // Keep track of items' original indices for proper handling with pagination
+  const [itemWithIndex, setItemWithIndex] = useState([]);
+  
+  useEffect(() => {
+    // Add index information to each item for reference when reordering
+    setItemWithIndex(items);
+  }, [items]);
+
   const handleDragEnd = (result) => {
-    if (!result.destination) return;
+    // Dropped outside the list
+    if (!result.destination) {
+      return;
+    }
     
-    const newItems = Array.from(items);
-    const [reorderedItem] = newItems.splice(result.source.index, 1);
-    newItems.splice(result.destination.index, 0, reorderedItem);
+    // If position didn't change, don't update state
+    if (result.destination.index === result.source.index) {
+      return;
+    }
     
+    const newItems = [...itemWithIndex];
+    const [removed] = newItems.splice(result.source.index, 1);
+    newItems.splice(result.destination.index, 0, removed);
+    
+    // Update items within the current page
     setItems(newItems);
   };
 
@@ -59,28 +98,26 @@ const WishlistList = ({ items, setItems, onDelete, onEdit }) => {
   return (
     <div>
       <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="wishlist">
+        <StrictModeDroppable droppableId="wishlist-current-page">
           {(provided, snapshot) => (
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
-              className={`space-y-3 ${snapshot.isDraggingOver ? "bg-blue-50/50 dark:bg-blue-900/10 rounded-lg p-2" : ""}`}
+              className={`space-y-3 ${snapshot.isDraggingOver ? "bg-blue-50/50 dark:bg-blue-900/10 rounded-lg p-2 transition-colors duration-200" : ""}`}
             >
-              <AnimatePresence mode="wait" presenceAffectsLayout={false}>
-                {items.map((item, index) => (
-                  <WishlistItem 
-                    key={item.id} 
-                    item={item} 
-                    index={index} 
-                    onDelete={onDelete}
-                    onEdit={onEdit}
-                  />
-                ))}
-              </AnimatePresence>
+              {items.map((item, index) => (
+                <WishlistItem 
+                  key={item.id} 
+                  item={item} 
+                  index={index} 
+                  onDelete={onDelete}
+                  onEdit={onEdit}
+                />
+              ))}
               {provided.placeholder}
             </div>
           )}
-        </Droppable>
+        </StrictModeDroppable>
       </DragDropContext>
       
       <motion.p 
@@ -104,7 +141,7 @@ const WishlistList = ({ items, setItems, onDelete, onEdit }) => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
           </svg>
         </motion.span>
-        Drag items to reorder your wishlist
+        Drag items to reorder within the current page
       </motion.p>
     </div>
   );
