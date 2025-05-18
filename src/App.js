@@ -3,12 +3,15 @@ import Header from './components/Header';
 import AddItem from './components/AddItem';
 import WishlistList from './components/WishlistList';
 import Footer from './components/Footer';
+import EditItemModal from './components/EditItemModal';
 import useLocalStorage from './hooks/useLocalStorage';
 import './App.css';
 
 function App() {
   const [items, setItems] = useLocalStorage('wishlist-items', []);
   const [darkMode, setDarkMode] = useLocalStorage('dark-mode', false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Add new item to the wishlist
   const handleAddItem = (item) => {
@@ -18,6 +21,26 @@ function App() {
   // Delete an item from the wishlist
   const handleDeleteItem = (id) => {
     setItems(items.filter(item => item.id !== id));
+  };
+  
+  // Open edit modal
+  const handleEditItem = (item) => {
+    setEditingItem(item);
+    setIsEditModalOpen(true);
+  };
+  
+  // Save edited item
+  const handleSaveEdit = (updatedItem) => {
+    setItems(items.map(item => 
+      item.id === updatedItem.id ? updatedItem : item
+    ));
+  };
+  
+  // Close edit modal
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    // Give time for the exit animation to complete before clearing the item
+    setTimeout(() => setEditingItem(null), 300);
   };
 
   // Toggle dark mode
@@ -62,11 +85,20 @@ function App() {
               items={items} 
               setItems={setItems} 
               onDelete={handleDeleteItem}
+              onEdit={handleEditItem}
             />
           </div>
         </main>
         
         <Footer />
+        
+        {/* Edit Modal */}
+        <EditItemModal 
+          item={editingItem} 
+          isOpen={isEditModalOpen} 
+          onClose={handleCloseEditModal} 
+          onSave={handleSaveEdit}
+        />
       </div>
     </div>
   );
